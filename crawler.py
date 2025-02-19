@@ -15,7 +15,7 @@ session = Session()
 
 # Selenium 설정
 options = webdriver.ChromeOptions()
-options.add_argument('--headless')
+# options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--disable-gpu')
@@ -82,16 +82,41 @@ try:
     url = "https://www.wanted.co.kr/wdlist/518?country=kr&job_sort=job.recommend_order&years=-1&locations=all"
     driver.get(url)
 
-    # 무한 스크롤 처리
+    # # 무한 스크롤 처리
+    # SCROLL_PAUSE_TIME = 2
+    # last_height = driver.execute_script("return document.body.scrollHeight")
+    #
+    # while True:
+    #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    #     time.sleep(SCROLL_PAUSE_TIME)
+    #     new_height = driver.execute_script("return document.body.scrollHeight")
+    #     if new_height == last_height:
+    #         break
+    #     last_height = new_height
+    #
+    # print("스크롤 완료, 모든 데이터를 로드했습니다.")
+    # 무한 스크롤 처리 (최대 10개 제한)
     SCROLL_PAUSE_TIME = 2
+    MAX_JOBS = 10
+
     last_height = driver.execute_script("return document.body.scrollHeight")
 
     while True:
+        # 현재 채용공고 수 확인
+        job_cards = driver.find_elements(By.CSS_SELECTOR,
+                                         ".JobCard_JobCard__Tb7pI a[data-attribute-id='position__click']")
+
+        # 100개 이상 수집 시 스크롤 중단
+        if len(job_cards) >= MAX_JOBS:
+            print(f"10개의 채용공고를 수집하여 스크롤을 중단합니다. 현재 수집된 공고 수: {len(job_cards)}")
+            break
+
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(SCROLL_PAUSE_TIME)
 
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
+            print("페이지 끝에 도달하여 스크롤을 중단합니다.")
             break
         last_height = new_height
 
