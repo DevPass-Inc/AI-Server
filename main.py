@@ -119,14 +119,7 @@ try:
 
             company_name = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Link__zAvYv").text
             location = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__yT4OD").text
-            # 포지션 이름 추출
-            try:
-                position_name = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "h1.JobHeader_JobHeader__PositionName__kfauc"))
-                ).text
-            except Exception:
-                print(f"⚠️ 포지션 이름을 찾을 수 없습니다. 링크: {link}")
-                position_name = "N/A"
+            position_name = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.wds-jtr30u"))).text
             experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__yT4OD")[-1].text
             due_date = driver.find_element(By.CSS_SELECTOR, ".JobDueTime_JobDueTime__3yzxa span").text
 
