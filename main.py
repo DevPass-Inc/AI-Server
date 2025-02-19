@@ -61,16 +61,23 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
 
     if matched_stack_ids:
         for stack_id in matched_stack_ids:
-            session.execute(text("""
-                INSERT INTO recruitment_stack (recruitment_id, stack_id)
-                VALUES (:recruitment_id, :stack_id)
-            """), {"recruitment_id": recruitment_id, "stack_id": stack_id})
+            # 중복 여부 확인 쿼리
+            exists_query = text("""
+                    SELECT 1 FROM recruitment_stack
+                    WHERE recruitment_id = :recruitment_id AND stack_id = :stack_id
+                """)
+            exists = session.execute(exists_query, {"recruitment_id": recruitment_id, "stack_id": stack_id}).fetchone()
+
+            if not exists:  # 중복이 아닐 때만 삽입
+                session.execute(text("""
+                        INSERT INTO recruitment_stack (recruitment_id, stack_id)
+                        VALUES (:recruitment_id, :stack_id)
+                    """), {"recruitment_id": recruitment_id, "stack_id": stack_id})
 
         session.commit()
         print(f"기술 스택 매핑 완료: {matched_stack_ids}")
     else:
         print("매핑된 기술 스택 없음.")
-
 try:
     url = "https://www.wanted.co.kr/wdlist/518?country=kr&job_sort=job.recommend_order&years=-1&locations=all"
     driver.get(url)
