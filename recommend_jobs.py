@@ -13,7 +13,7 @@ session = Session()
 
 def fetch_job_postings():
     query = text("""
-        SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit, recruiting
+        SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit
         FROM recruitment
     """)
     result = session.execute(query).mappings().all()
@@ -22,7 +22,7 @@ def fetch_job_postings():
     for row in result:
         description = " ".join(filter(None, [
             row['main_task'], row['qualification'], row['preferred'],
-            row['benefit'], row['recruiting']
+            row['benefit']
         ]))
         job_postings.append({
             "recruitment_id": row['recruitment_id'],
@@ -74,15 +74,18 @@ def recommend_jobs(user_stacks, user_resume):
 
         # 사용자 스택 상태 표시
         tech_stack_status = [
-            {"stack": stack, "isRequired": stack.lower() in [js.lower() for js in job_tech_stacks]}
-            for stack in user_stacks
+            {
+                "stack": job_stack,
+                "isRequired": any(job_stack.lower() == user_stack.lower() for user_stack in user_stacks)
+            }
+            for job_stack in job_tech_stacks
         ]
 
         recommendations.append({
-            "company_name": job['company_name'],
+            "companyName": job['company_name'],
             "position": job['position'],
-            "final_score": f"{final_score}%",
-            "tech_stacks": tech_stack_status
+            "finalScore": f"{final_score}%",
+            "stacks": tech_stack_status
         })
 
-    return sorted(recommendations, key=lambda x: float(x['final_score'].strip('%')), reverse=True)[:2]
+    return sorted(recommendations, key=lambda x: float(x['finalScore'].strip('%')), reverse=True)[:2]
