@@ -74,8 +74,11 @@ def recommend_jobs(user_stacks, user_resume):
 
         # 사용자 스택 상태 표시
         tech_stack_status = [
-            {"stack": stack, "isRequired": stack.lower() in [js.lower() for js in job_tech_stacks]}
-            for stack in user_stacks
+            {
+                "stack": job_stack,
+                "isRequired": any(job_stack.lower() == user_stack.lower() for user_stack in user_stacks)
+            }
+            for job_stack in job_tech_stacks
         ]
 
         recommendations.append({
