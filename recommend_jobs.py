@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer, util
 
 # DATABASE 설정
-DATABASE_URL = "mysql+pymysql://user:password@localhost:3306/devpass"
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 
 engine = create_engine(DATABASE_URL, echo=False)
 Session = sessionmaker(bind=engine)
