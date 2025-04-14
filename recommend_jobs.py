@@ -4,6 +4,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer, util
 
+from fetch_resume_document import fetch_resume_document, convert_resume_to_text, extract_user_stacks
+
 # DATABASE 설정
 DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 
@@ -89,3 +91,20 @@ def recommend_jobs(user_stacks, user_resume):
         })
 
     return sorted(recommendations, key=lambda x: float(x['finalScore'].strip('%')), reverse=True)[:2]
+
+def recommend_jobs_by_resume_id(resume_id: str):
+    # 1. 이력서 도큐먼트 조회
+    doc = fetch_resume_document(resume_id)
+    if not doc:
+        raise ValueError("해당 resume_id에 대한 이력서를 찾을 수 없습니다.")
+
+    resume = doc.get("resume")  # 실제 이력서 내용은 "resume" 안에 있음
+
+    # 2. userStacks 추출
+    user_stacks = extract_user_stacks(resume)
+
+    # 3. userResume 텍스트 생성
+    user_resume = convert_resume_to_text(resume)
+
+    # 4. 추천 수행
+    return recommend_jobs(user_stacks, user_resume)
