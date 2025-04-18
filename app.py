@@ -12,8 +12,5 @@ class RecommendationByResumeIdRequest(BaseModel):
 
 @app.post("/recommend")
 def recommend_by_resume_id(data: RecommendationByResumeIdRequest):
-    try:
-        recommendations = recommend_jobs_by_resume_id(data.resumeId)
-        return {"status": "성공", "data": recommendations}
-    except Exception as e:
-        return {"status": "에러", "message": str(e)}
+    recommendations = recommend_jobs_by_resume_id(data.resumeId)
+    return recommendations
