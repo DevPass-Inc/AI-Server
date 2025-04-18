@@ -4,7 +4,7 @@ from bson import ObjectId
 MONGO_URL = "mongodb://localhost:27017"
 client = MongoClient(MONGO_URL)
 db = client['devpass']
-resume_collection = db['resume_document']
+resume_collection = db['resumes']
 
 # 이력서 ID(Object)로 이력서 찾기
 def fetch_resume_document(resume_id: str):

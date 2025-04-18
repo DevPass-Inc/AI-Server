@@ -24,7 +24,7 @@ driver = webdriver.Chrome(options=options)
 
 
 def fetch_stacks():
-    query = text("SELECT stack_id, name FROM stack")
+    query = text("SELECT stack_id, name FROM stacks")
     result = session.execute(query).mappings().all()
     return {row['name'].lower(): row['stack_id'] for row in result}
 
@@ -33,7 +33,7 @@ def fetch_stacks():
 # 채용공고 저장 및 매핑 함수
 def save_recruitment_with_tech(company_name, location, position, experience, due_date, image_url, details, tech_stacks):
     insert_recruitment_query = text("""
-        INSERT INTO recruitment (company_name, location, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
+        INSERT INTO recruitments (company_name, location, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
         VALUES (:company_name, :location, :position, :career, :deadline, :image_url, :main_task, :qualification, :preferred, :benefit)
     """)
 

@@ -16,7 +16,7 @@ session = Session()
 def fetch_job_postings():
     query = text("""
         SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit
-        FROM recruitment
+        FROM recruitments
     """)
     result = session.execute(query).mappings().all()
 
@@ -58,8 +58,8 @@ def recommend_jobs(user_stacks, user_resume):
     for job in job_postings:
         # 채용공고 관련 스택 조회
         job_tech_stacks_query = text("""
-            SELECT s.name FROM recruitment_stack rs
-            JOIN stack s ON rs.stack_id = s.stack_id
+            SELECT s.name FROM recruitment_stacks rs
+            JOIN stacks s ON rs.stack_id = s.stack_id
             WHERE rs.recruitment_id = :recruitment_id
         """)
         job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
