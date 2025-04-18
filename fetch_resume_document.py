@@ -16,8 +16,7 @@ def extract_user_stacks(resume: dict) -> list[str]:
     stacks = set()
 
     for skill in skills_section:
-        for tech in skill.get("skills", []):
-            stacks.add(tech.strip())
+        stacks.add(skill.strip())
 
     return list(stacks)
 
