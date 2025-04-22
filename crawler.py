@@ -24,7 +24,7 @@ driver = webdriver.Chrome(options=options)
 
 
 def fetch_stacks():
-    query = text("SELECT stack_id, name FROM stack")
+    query = text("SELECT stack_id, name FROM stacks")
     result = session.execute(query).mappings().all()
     return {row['name'].lower(): row['stack_id'] for row in result}
 
@@ -33,7 +33,7 @@ def fetch_stacks():
 # 채용공고 저장 및 매핑 함수
 def save_recruitment_with_tech(company_name, location, position, experience, due_date, image_url, details, tech_stacks):
     insert_recruitment_query = text("""
-        INSERT INTO recruitment (company_name, location, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
+        INSERT INTO recruitments (company_name, location, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
         VALUES (:company_name, :location, :position, :career, :deadline, :image_url, :main_task, :qualification, :preferred, :benefit)
     """)
 
@@ -109,7 +109,7 @@ try:
             try:
                 button = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable(
-                        (By.CSS_SELECTOR, ".JobDescription_JobDescription__paragraph__wrapper__G4CNd button"))
+                        (By.CSS_SELECTOR, ".JobDescription_JobDescription__paragraph__wrapper__WPrKC button"))
                 )
                 button.click()
                 time.sleep(2)
@@ -117,18 +117,18 @@ try:
                 pass  # '더 보기' 버튼이 없어도 진행
 
             company_name = driver.find_element(By.CSS_SELECTOR,
-                                               ".JobHeader_JobHeader__Tools__Company__Link__zAvYv").text
-            location = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__yT4OD").text
+                                               ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y").text
+            location = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y").text
             position_name = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "h1.wds-jtr30u"))
             ).text
-            experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__yT4OD")[
+            experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y")[
                 -1].text
-            due_date = driver.find_element(By.CSS_SELECTOR, ".JobDueTime_JobDueTime__3yzxa span").text
+            due_date = driver.find_element(By.CSS_SELECTOR, ".JobDueTime_JobDueTime__yvhtg span").text
 
             # ✅ 이미지 URL 추출
             try:
-                image_element = driver.find_element(By.CSS_SELECTOR, ".JobCard_JobCard__thumb__WU1ax img")
+                image_element = driver.find_element(By.CSS_SELECTOR, ".JobCard_JobCard__thumb__iOtFn img")
                 image_url = image_element.get_attribute("src")
             except Exception:
                 image_url = None
@@ -136,9 +136,9 @@ try:
 
             # 상세 내용 추출
             job_detail_wrapper = driver.find_element(By.CSS_SELECTOR,
-                                                     ".JobDescription_JobDescription__paragraph__wrapper__G4CNd")
+                                                     ".JobDescription_JobDescription__paragraph__wrapper__WPrKC")
             paragraphs = job_detail_wrapper.find_elements(By.CSS_SELECTOR,
-                                                          ".JobDescription_JobDescription__paragraph__Lhegj")
+                                                          ".JobDescription_JobDescription__paragraph__87w8I")
             details = [p.find_element(By.CSS_SELECTOR, "span").text.replace("\n", " ").strip() for p in paragraphs if
                        p.text.strip()]
 

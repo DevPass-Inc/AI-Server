@@ -4,6 +4,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer, util
 
+from fetch_resume_document import fetch_resume_document, convert_resume_to_text, extract_user_stacks
+
 # DATABASE 설정
 DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 
@@ -12,25 +14,30 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 def fetch_job_postings():
-    query = text("""
-        SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit
-        FROM recruitment
-    """)
-    result = session.execute(query).mappings().all()
+    with Session() as session:
+        try:
+            query = text("""
+                SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit
+                FROM recruitments
+            """)
+            result = session.execute(query).mappings().all()
 
-    job_postings = []
-    for row in result:
-        description = " ".join(filter(None, [
-            row['main_task'], row['qualification'], row['preferred'],
-            row['benefit']
-        ]))
-        job_postings.append({
-            "recruitment_id": row['recruitment_id'],
-            "company_name": row['company_name'],
-            "position": row['position'],
-            "description": description
-        })
-    return job_postings
+            job_postings = []
+            for row in result:
+                description = " ".join(filter(None, [
+                    row['main_task'], row['qualification'], row['preferred'],
+                    row['benefit']
+                ]))
+                job_postings.append({
+                    "recruitment_id": row['recruitment_id'],
+                    "company_name": row['company_name'],
+                    "position": row['position'],
+                    "description": description
+                })
+            return job_postings
+        except Exception as e:
+            session.rollback()
+            raise e
 
 def calculate_tech_similarity(user_stacks, job_stacks):
     user_text = " ".join(user_stacks)
@@ -55,13 +62,17 @@ def recommend_jobs(user_stacks, user_resume):
 
     for job in job_postings:
         # 채용공고 관련 스택 조회
-        job_tech_stacks_query = text("""
-            SELECT s.name FROM recruitment_stack rs
-            JOIN stack s ON rs.stack_id = s.stack_id
-            WHERE rs.recruitment_id = :recruitment_id
-        """)
-        job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
-            "recruitment_id": job['recruitment_id']}).mappings().all()]
+            try:
+                job_tech_stacks_query = text("""
+                    SELECT s.name FROM recruitment_stacks rs
+                    JOIN stacks s ON rs.stack_id = s.stack_id
+                    WHERE rs.recruitment_id = :recruitment_id
+                """)
+                job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
+                    "recruitment_id": job['recruitment_id']}).mappings().all()]
+            except Exception as e:
+                session.rollback()
+                raise e
 
         # 기술 유사도 계산
         tech_similarity = calculate_tech_similarity(user_stacks, job_tech_stacks)
@@ -89,3 +100,20 @@ def recommend_jobs(user_stacks, user_resume):
         })
 
     return sorted(recommendations, key=lambda x: float(x['finalScore'].strip('%')), reverse=True)[:2]
+
+def recommend_jobs_by_resume_id(resume_id: str):
+    # 1. 이력서 도큐먼트 조회
+    doc = fetch_resume_document(resume_id)
+    if not doc:
+        raise ValueError("해당 resume_id에 대한 이력서를 찾을 수 없습니다.")
+
+    resume = doc.get("resume")  # 실제 이력서 내용은 "resume" 안에 있음
+
+    # 2. userStacks 추출
+    user_stacks = extract_user_stacks(resume)
+
+    # 3. userResume 텍스트 생성
+    user_resume = convert_resume_to_text(resume)
+
+    # 4. 추천 수행
+    return recommend_jobs(user_stacks, user_resume)
