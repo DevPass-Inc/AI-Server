@@ -14,25 +14,30 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 def fetch_job_postings():
-    query = text("""
-        SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit
-        FROM recruitments
-    """)
-    result = session.execute(query).mappings().all()
+    with Session() as session:
+        try:
+            query = text("""
+                SELECT recruitment_id, company_name, position, main_task, qualification, preferred, benefit
+                FROM recruitments
+            """)
+            result = session.execute(query).mappings().all()
 
-    job_postings = []
-    for row in result:
-        description = " ".join(filter(None, [
-            row['main_task'], row['qualification'], row['preferred'],
-            row['benefit']
-        ]))
-        job_postings.append({
-            "recruitment_id": row['recruitment_id'],
-            "company_name": row['company_name'],
-            "position": row['position'],
-            "description": description
-        })
-    return job_postings
+            job_postings = []
+            for row in result:
+                description = " ".join(filter(None, [
+                    row['main_task'], row['qualification'], row['preferred'],
+                    row['benefit']
+                ]))
+                job_postings.append({
+                    "recruitment_id": row['recruitment_id'],
+                    "company_name": row['company_name'],
+                    "position": row['position'],
+                    "description": description
+                })
+            return job_postings
+        except Exception as e:
+            session.rollback()
+            raise e
 
 def calculate_tech_similarity(user_stacks, job_stacks):
     user_text = " ".join(user_stacks)
@@ -57,13 +62,17 @@ def recommend_jobs(user_stacks, user_resume):
 
     for job in job_postings:
         # 채용공고 관련 스택 조회
-        job_tech_stacks_query = text("""
-            SELECT s.name FROM recruitment_stacks rs
-            JOIN stacks s ON rs.stack_id = s.stack_id
-            WHERE rs.recruitment_id = :recruitment_id
-        """)
-        job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
-            "recruitment_id": job['recruitment_id']}).mappings().all()]
+            try:
+                job_tech_stacks_query = text("""
+                    SELECT s.name FROM recruitment_stacks rs
+                    JOIN stacks s ON rs.stack_id = s.stack_id
+                    WHERE rs.recruitment_id = :recruitment_id
+                """)
+                job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
+                    "recruitment_id": job['recruitment_id']}).mappings().all()]
+            except Exception as e:
+                session.rollback()
+                raise e
 
         # 기술 유사도 계산
         tech_similarity = calculate_tech_similarity(user_stacks, job_tech_stacks)
