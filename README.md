@@ -1,2 +1,2 @@
-# crawler
-DevPass 크롤러 레포지토리
+# AI-Server
+DevPass AI 서버 레포지토리
