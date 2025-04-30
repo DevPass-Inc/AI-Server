@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from bson import ObjectId
 
-MONGO_URL = "mongodb://localhost:27017"
+MONGO_URL = "mongodb://devpass-mongo:27017"
 client = MongoClient(MONGO_URL)
 db = client['devpass']
 resume_collection = db['resumes']
@@ -16,15 +16,16 @@ def extract_user_stacks(resume: dict) -> list[str]:
     stacks = set()
 
     for skill in skills_section:
-        stacks.add(skill.strip())
+        if isinstance(skill, dict):
+            raw = skill.get("skill", "")
+            if isinstance(raw, str) and raw.strip():
+                stacks.add(raw.strip())
 
     return list(stacks)
 
 # 기업추천에 사용할 텍스트 만들기
 def convert_resume_to_text(resume: dict) -> str:
-    parts = []
-
-    parts.append(f"요약: {' '.join(resume.get('summary', []))}")
+    parts = [f"요약: {' '.join(resume.get('summary', []))}"]
 
     for exp in resume.get("experience", []):
         parts.append(f"[프로젝트] {exp.get('project', '')} - {exp.get('summary', '')} ({exp.get('duration', '')})")
