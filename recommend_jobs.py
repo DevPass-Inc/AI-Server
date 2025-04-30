@@ -62,17 +62,17 @@ def recommend_jobs(user_stacks, user_resume):
 
     for job in job_postings:
         # 채용공고 관련 스택 조회
-            try:
-                job_tech_stacks_query = text("""
-                    SELECT s.name FROM recruitment_stacks rs
-                    JOIN stacks s ON rs.stack_id = s.stack_id
-                    WHERE rs.recruitment_id = :recruitment_id
-                """)
-                job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
-                    "recruitment_id": job['recruitment_id']}).mappings().all()]
-            except Exception as e:
-                session.rollback()
-                raise e
+        try:
+            job_tech_stacks_query = text("""
+                SELECT s.name FROM recruitment_stacks rs
+                JOIN stacks s ON rs.stack_id = s.stack_id
+                WHERE rs.recruitment_id = :recruitment_id
+            """)
+            job_tech_stacks = [row['name'] for row in session.execute(job_tech_stacks_query, {
+                "recruitment_id": job['recruitment_id']}).mappings().all()]
+        except Exception as e:
+            session.rollback()
+            raise e
 
         # 기술 유사도 계산
         tech_similarity = calculate_tech_similarity(user_stacks, job_tech_stacks)
