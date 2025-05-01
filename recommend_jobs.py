@@ -93,6 +93,7 @@ def recommend_jobs(user_stacks, user_resume):
         ]
 
         recommendations.append({
+            "recruitmentId": job['recruitment_id'],
             "companyName": job['company_name'],
             "position": job['position'],
             "finalScore": f"{final_score}%",
