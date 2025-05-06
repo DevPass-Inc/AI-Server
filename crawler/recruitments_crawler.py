@@ -1,5 +1,6 @@
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,7 +8,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 # MySQL 설정
-DATABASE_URL = "mysql+pymysql://user:password@localhost:3306/devpass"
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db-python:3306/devpass"
 
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
@@ -15,12 +16,20 @@ session = Session()
 
 # Selenium 설정
 options = webdriver.ChromeOptions()
-# options.add_argument('--headless')
+options.add_argument('--headless')
+options.binary_location = "/usr/bin/chromium"
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--disable-gpu')
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+# options.add_argument('--headless=new')
+# options.add_argument('--user-data-dir=/app/tmp/chrome-profile-recruit')
 
-driver = webdriver.Chrome(options=options)
+driver = webdriver.Chrome(
+    service=Service("/usr/bin/chromedriver"),
+    options=options
+)
 
 
 def fetch_stacks():
