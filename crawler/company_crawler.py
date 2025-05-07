@@ -10,6 +10,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from crawler.elasticsearch import index_company_to_elasticsearch
+
 # MySQL 설정
 DATABASE_URL = "mysql+pymysql://user:password@devpass-db-python:3306/devpass"
 
@@ -47,7 +49,7 @@ def save_company(name, category, location, avg_salary, new_hire_avg_salary, empl
         VALUES (:name, :category, :location, :avg_salary, :new_hire_avg_salary, :employee_count, :ceo_name, :company_history)
     """)
 
-    session.execute(insert_company_query, {
+    result = session.execute(insert_company_query, {
         "name": name,
         "category": category,
         "location": location,
@@ -57,8 +59,10 @@ def save_company(name, category, location, avg_salary, new_hire_avg_salary, empl
         "ceo_name": ceo_name,
         "company_history": company_history,
     })
-
     session.commit()
+
+    company_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
+    index_company_to_elasticsearch(company_id, name, category, location, avg_salary, new_hire_avg_salary, employee_count, ceo_name, company_history)
 
 
 # 회사 크롤링
