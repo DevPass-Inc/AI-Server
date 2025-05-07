@@ -1,12 +1,17 @@
 import re
+import sys
 import time
 from selenium import webdriver
+from selenium.common import TimeoutException
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 # MySQL 설정
-DATABASE_URL = "mysql+pymysql://user:password@localhost:3306/devpass"
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db-python:3306/devpass"
 
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
@@ -15,10 +20,19 @@ session = Session()
 # Selenium 설정
 options = webdriver.ChromeOptions()
 options.add_argument('--headless')
+options.binary_location = "/usr/bin/chromium"
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--disable-gpu')
-driver = webdriver.Chrome(options=options)
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+# options.add_argument('--user-data-dir=/app/tmp/chrome-profile-company')
+# options.add_argument('--headless=new')
+
+driver = webdriver.Chrome(
+    service=Service("/usr/bin/chromedriver"),
+    options=options
+)
 
 
 def extract_number(text):
@@ -49,7 +63,7 @@ def save_company(name, category, location, avg_salary, new_hire_avg_salary, empl
 
 # 회사 크롤링
 start_id = 1
-end_id = 50000
+end_id = 10
 
 for company_id in range(start_id, end_id + 1):
     url = f"https://www.wanted.co.kr/company/{company_id}"
@@ -57,7 +71,14 @@ for company_id in range(start_id, end_id + 1):
         driver.get(url)
         time.sleep(2)
 
-        name = driver.find_element(By.CLASS_NAME, "wds-14f7cyg").text
+        try:
+            name_element = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "wds-14f7cyg"))
+            )
+            name = name_element.text
+        except TimeoutException:
+            print(f"⚠️ 회사 ID {company_id} 크롤링 실패: 이름 요소를 찾을 수 없음")
+            continue
 
         category_elements = driver.find_elements(By.CLASS_NAME, "wds-1h75osx")
         category = category_elements[0].text if len(category_elements) > 0 else None
@@ -79,9 +100,22 @@ for company_id in range(start_id, end_id + 1):
         except Exception as e:
             print(f"⚠️ 직원 수 크롤링 실패: {e}")
 
-        ceo_elements = driver.find_elements(By.CLASS_NAME, "CompanyInfoTable_definition__dd__oV9wp")
-        ceo_name = ceo_elements[0].text if len(ceo_elements) > 0 else None
-        company_history = ceo_elements[1].text if len(ceo_elements) > 1 else None
+        ceo_name = None
+        company_history = None
+
+        try:
+            dt_elements = driver.find_elements(By.CLASS_NAME, "CompanyInfoTable_definition__dt__hMyz7")
+            dd_elements = driver.find_elements(By.CLASS_NAME, "CompanyInfoTable_definition__dd__oV9wp")
+
+            for dt, dd in zip(dt_elements, dd_elements):
+                label = dt.text.strip()
+                if label == "대표자명":
+                    ceo_name = dd.text.strip()
+                elif label == "연혁":
+                    company_history = dd.text.strip()
+
+        except Exception as e:
+            print(f"⚠️ 대표자명 및 연혁 크롤링 실패: {e}")
 
         save_company(name, category, location, avg_salary, new_hire_avg_salary, employee_count, ceo_name,
                      company_history)
@@ -92,3 +126,4 @@ for company_id in range(start_id, end_id + 1):
 
 driver.quit()
 session.close()
+sys.exit(0)
