@@ -1,6 +1,12 @@
 from elasticsearch import Elasticsearch
 
-es = Elasticsearch("http://localhost:9200")
+es = Elasticsearch(
+    "http://devpass-elasticsearch:9200",
+    headers={
+        "Accept": "application/vnd.elasticsearch+json; compatible-with=8",
+        "Content-Type": "application/vnd.elasticsearch+json; compatible-with=8",
+    }
+)
 
 def index_company_to_elasticsearch(company_id, name, category, location, avg_salary, new_hire_avg_salary, employee_count, ceo_name, company_history):
     doc = {
