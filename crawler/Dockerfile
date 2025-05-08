@@ -16,8 +16,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY crawler/ ./crawler
 
-WORKDIR /app/crawler
-
 ENV PATH="/usr/lib/chromium:/usr/bin:${PATH}"
 ENV CHROME_BIN="/usr/bin/chromium"
 ENV CHROMEDRIVER="/usr/bin/chromedriver"
+ENV PYTHONPATH="/app"
+
+WORKDIR /app/crawler
+
+CMD ["python", "company_crawler.py"]
