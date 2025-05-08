@@ -7,6 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from crawler.es_utils import index_recruitment_to_elasticsearch
+
 # MySQL 설정
 DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 
@@ -62,6 +64,7 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
     session.commit()
 
     recruitment_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
+    index_recruitment_to_elasticsearch(recruitment_id, company_name, position, location, experience, details[0] if len(details) > 0 else None, details[1] if len(details) > 1 else None, details[2] if len(details) > 2 else None, details[3] if len(details) > 3 else None, due_date, image_url)
 
     combined_text = " ".join(filter(None, details)).lower()
     matched_stack_ids = [tech_id for tech_name, tech_id in tech_stacks.items() if tech_name in combined_text]

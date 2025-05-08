@@ -21,3 +21,19 @@ def index_company_to_elasticsearch(company_id, name, category, location, avg_sal
         "companyHistory": company_history,
     }
     es.index(index="companies", id=company_id, document=doc)
+
+def index_recruitment_to_elasticsearch(recruitment_id, company_name, position, location, career, main_task, qualification, preferred, benefit, deadline, image_url):
+    doc = {
+        "id": recruitment_id,
+        "companyName": company_name,
+        "position": position,
+        "location": location,
+        "career": career,
+        "mainTask": main_task,
+        "qualification": qualification,
+        "preferred": preferred,
+        "benefit": benefit,
+        "deadline": deadline,
+        "imageUrl": image_url,
+    }
+    es.index(index="recruitments", id=recruitment_id, document=doc)
