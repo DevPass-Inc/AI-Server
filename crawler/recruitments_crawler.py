@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 # MySQL 설정
-DATABASE_URL = "mysql+pymysql://user:password@devpass-db-python:3306/devpass"
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
