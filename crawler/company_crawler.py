@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from crawler.elasticsearch import index_company_to_elasticsearch
+from crawler.es_utils import index_company_to_elasticsearch
 
 # MySQL 설정
 DATABASE_URL = "mysql+pymysql://user:password@devpass-db-python:3306/devpass"
