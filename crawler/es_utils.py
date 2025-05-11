@@ -26,6 +26,7 @@ def index_recruitment_to_elasticsearch(recruitment_id, company_name, position, l
     doc = {
         "id": recruitment_id,
         "companyName": company_name,
+        "positionName": position_name,
         "position": position,
         "location": location,
         "career": career,
