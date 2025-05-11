@@ -10,7 +10,24 @@ from sqlalchemy.orm import sessionmaker
 from crawler.es_utils import index_recruitment_to_elasticsearch
 
 # MySQL 설정
-DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
+def classify_position(position_name: str) -> str:
+    keyword_map = {
+        "Backend": ["서버", "백엔드", "backend", "API", "spring", "node", "django", "rails"],
+        "Frontend": ["프론트", "프론트엔드", "frontend", "react", "vue", "angular"],
+        "Data": ["데이터", "data", "분석"],
+        "AI": ["AI", "ML", "딥러닝", "머신러닝"],
+        "Mobile": ["android", "ios", "모바일", "앱", "swift", "kotlin"],
+        "DevOps": ["인프라", "devops", "aws", "platform", "k8s", "docker", "클라우드"],
+        "Security": ["보안", "security", "해킹", "취약점"],
+        "QA": ["QA", "테스트", "test", "품질관리"],
+        "PM": ["기획", "PM", "product manager", "PO", "기획자", "프로덕트 매니저"],
+    }
+
+    lowered = position_name.lower()
+    for category, keywords in keyword_map.items():
+        if any(keyword.lower() in lowered for keyword in keywords):
+            return category
+    return "ETC"
 
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
@@ -44,13 +61,14 @@ def fetch_stacks():
 # 채용공고 저장 및 매핑 함수
 def save_recruitment_with_tech(company_name, location, position, experience, due_date, image_url, details, tech_stacks):
     insert_recruitment_query = text("""
-        INSERT INTO recruitments (company_name, location, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
-        VALUES (:company_name, :location, :position, :career, :deadline, :image_url, :main_task, :qualification, :preferred, :benefit)
+        INSERT INTO recruitments (company_name, location, position_name, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
+        VALUES (:company_name, :location, :position_name, :position, :career, :deadline, :image_url, :main_task, :qualification, :preferred, :benefit)
     """)
 
     session.execute(insert_recruitment_query, {
         "company_name": company_name,
         "location": location,
+        "position_name": position_name,
         "position": position,
         "career": experience,
         "deadline": due_date,
@@ -64,7 +82,14 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
     session.commit()
 
     recruitment_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
-    index_recruitment_to_elasticsearch(recruitment_id, company_name, position, location, experience, details[0] if len(details) > 0 else None, details[1] if len(details) > 1 else None, details[2] if len(details) > 2 else None, details[3] if len(details) > 3 else None, due_date, image_url)
+    index_recruitment_to_elasticsearch(
+        recruitment_id, company_name, position_name, position, location, experience,
+        details[0] if len(details) > 0 else None,
+        details[1] if len(details) > 1 else None,
+        details[2] if len(details) > 2 else None,
+        details[3] if len(details) > 3 else None,
+        due_date, image_url
+    )
 
     combined_text = " ".join(filter(None, details)).lower()
     matched_stack_ids = [tech_id for tech_name, tech_id in tech_stacks.items() if tech_name in combined_text]
@@ -82,7 +107,6 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
                     INSERT INTO recruitment_stack (recruitment_id, stack_id)
                     VALUES (:recruitment_id, :stack_id)
                 """), {"recruitment_id": recruitment_id, "stack_id": stack_id})
-
         session.commit()
         print(f"✅ 기술 스택 매핑 완료: {matched_stack_ids}")
     else:
@@ -117,7 +141,6 @@ try:
         try:
             driver.get(link)
 
-            # '더 보기' 버튼 클릭 시도
             try:
                 button = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable(
@@ -126,19 +149,17 @@ try:
                 button.click()
                 time.sleep(2)
             except Exception:
-                pass  # '더 보기' 버튼이 없어도 진행
+                pass
 
-            company_name = driver.find_element(By.CSS_SELECTOR,
-                                               ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y").text
+            company_name = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y").text
             location = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y").text
             position_name = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "h1.wds-jtr30u"))
             ).text
-            experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y")[
-                -1].text
+            position = classify_position(position_name)
+            experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y")[-1].text
             due_date = driver.find_element(By.CSS_SELECTOR, ".JobDueTime_JobDueTime__yvhtg span").text
 
-            # ✅ 이미지 URL 추출
             try:
                 image_element = driver.find_element(By.CSS_SELECTOR, ".JobCard_JobCard__thumb__iOtFn img")
                 image_url = image_element.get_attribute("src")
@@ -146,17 +167,12 @@ try:
                 image_url = None
                 print("⚠️ 이미지 URL을 찾을 수 없음.")
 
-            # 상세 내용 추출
-            job_detail_wrapper = driver.find_element(By.CSS_SELECTOR,
-                                                     ".JobDescription_JobDescription__paragraph__wrapper__WPrKC")
-            paragraphs = job_detail_wrapper.find_elements(By.CSS_SELECTOR,
-                                                          ".JobDescription_JobDescription__paragraph__87w8I")
-            details = [p.find_element(By.CSS_SELECTOR, "span").text.replace("\n", " ").strip() for p in paragraphs if
-                       p.text.strip()]
+            job_detail_wrapper = driver.find_element(By.CSS_SELECTOR, ".JobDescription_JobDescription__paragraph__wrapper__WPrKC")
+            paragraphs = job_detail_wrapper.find_elements(By.CSS_SELECTOR, ".JobDescription_JobDescription__paragraph__87w8I")
+            details = [p.find_element(By.CSS_SELECTOR, "span").text.replace("\n", " ").strip() for p in paragraphs if p.text.strip()]
 
-            save_recruitment_with_tech(company_name, location, position_name, experience, due_date, image_url, details,
-                                       tech_stacks)
-            print(f"🎉 채용공고 저장 완료: {company_name} - {position_name}")
+            save_recruitment_with_tech(company_name, location, position_name, position, experience, due_date, image_url, details, tech_stacks)
+            print(f"🎉 채용공고 저장 완료: {company_name} - {position_name} ({position})")
 
         except Exception as e:
             print(f"❌ 에러 발생 ({link}): {e}")
