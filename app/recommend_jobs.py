@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer, util
 
-from fetch_resume_document import fetch_resume_document, convert_resume_to_text, extract_user_stacks
+from app.fetch_resume_document import fetch_resume_document, convert_resume_to_text, extract_user_stacks
 
 # DATABASE 설정
 DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
@@ -42,7 +42,7 @@ def fetch_job_postings():
 def calculate_tech_similarity(user_stacks, job_stacks):
     user_text = " ".join(user_stacks)
     job_text = " ".join(job_stacks)
-    vectorizer = TfidfVectorizer()
+    vectorizer = TfidfVectorizer(stop_words=None)
     vectors = vectorizer.fit_transform([user_text, job_text])
     return round(cosine_similarity(vectors[0], vectors[1])[0][0], 4)
 
@@ -73,17 +73,11 @@ def recommend_jobs(user_stacks, user_resume):
         except Exception as e:
             session.rollback()
             raise e
-
-        # 기술 유사도 계산
+        # 그 다음은 너 코드 그대로
         tech_similarity = calculate_tech_similarity(user_stacks, job_tech_stacks)
-
-        # 문맥 유사도 계산
         context_similarity = calculate_context_similarity(user_resume, job['description'])
-
-        # 최종 점수 계산
         final_score = calculate_final_score(tech_similarity, context_similarity)
 
-        # 사용자 스택 상태 표시
         tech_stack_status = [
             {
                 "stack": job_stack,
@@ -108,7 +102,7 @@ def recommend_jobs_by_resume_id(resume_id: str):
     if not doc:
         raise ValueError("해당 resume_id에 대한 이력서를 찾을 수 없습니다.")
 
-    resume = doc.get("resume")  # 실제 이력서 내용은 "resume" 안에 있음
+    resume = doc.get("resume")
 
     # 2. userStacks 추출
     user_stacks = extract_user_stacks(resume)

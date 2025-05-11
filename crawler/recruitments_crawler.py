@@ -1,13 +1,16 @@
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from crawler.es_utils import index_recruitment_to_elasticsearch
+
 # MySQL 설정
-DATABASE_URL = "mysql+pymysql://user:password@localhost:3306/devpass"
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
@@ -15,12 +18,20 @@ session = Session()
 
 # Selenium 설정
 options = webdriver.ChromeOptions()
-# options.add_argument('--headless')
+options.add_argument('--headless')
+options.binary_location = "/usr/bin/chromium"
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--disable-gpu')
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+# options.add_argument('--headless=new')
+# options.add_argument('--user-data-dir=/app/tmp/chrome-profile-recruit')
 
-driver = webdriver.Chrome(options=options)
+driver = webdriver.Chrome(
+    service=Service("/usr/bin/chromedriver"),
+    options=options
+)
 
 
 def fetch_stacks():
@@ -53,6 +64,7 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
     session.commit()
 
     recruitment_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
+    index_recruitment_to_elasticsearch(recruitment_id, company_name, position, location, experience, details[0] if len(details) > 0 else None, details[1] if len(details) > 1 else None, details[2] if len(details) > 2 else None, details[3] if len(details) > 3 else None, due_date, image_url)
 
     combined_text = " ".join(filter(None, details)).lower()
     matched_stack_ids = [tech_id for tech_name, tech_id in tech_stacks.items() if tech_name in combined_text]
