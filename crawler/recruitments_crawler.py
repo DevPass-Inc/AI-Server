@@ -57,10 +57,7 @@ def fetch_stacks():
     result = session.execute(query).mappings().all()
     return {row['name'].lower(): row['stack_id'] for row in result}
 
-
-
-# 채용공고 저장 및 매핑 함수
-def save_recruitment_with_tech(company_name, location, position, experience, due_date, image_url, details, tech_stacks):
+def save_recruitment_with_tech(company_name, location, position_name, position, experience, due_date, image_url, details, tech_stacks):
     insert_recruitment_query = text("""
         INSERT INTO recruitments (company_name, location, position_name, position, career, deadline, image_url, main_task, qualification, preferred, benefit)
         VALUES (:company_name, :location, :position_name, :position, :career, :deadline, :image_url, :main_task, :qualification, :preferred, :benefit)
@@ -81,17 +78,7 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
     })
 
     session.commit()
-
     recruitment_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
-    index_recruitment_to_elasticsearch(
-        recruitment_id, company_name, position_name, position, location, experience,
-        details[0] if len(details) > 0 else None,
-        details[1] if len(details) > 1 else None,
-        details[2] if len(details) > 2 else None,
-        details[3] if len(details) > 3 else None,
-        due_date, image_url,
-        min_career, max_career
-    )
 
     combined_text = " ".join(filter(None, details)).lower()
     matched_stack_ids = [tech_id for tech_name, tech_id in tech_stacks.items() if tech_name in combined_text]
@@ -99,20 +86,34 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
     if matched_stack_ids:
         for stack_id in matched_stack_ids:
             exists_query = text("""
-                SELECT 1 FROM recruitment_stack
+                SELECT 1 FROM recruitment_stacks
                 WHERE recruitment_id = :recruitment_id AND stack_id = :stack_id
             """)
             exists = session.execute(exists_query, {"recruitment_id": recruitment_id, "stack_id": stack_id}).fetchone()
 
             if not exists:
                 session.execute(text("""
-                    INSERT INTO recruitment_stack (recruitment_id, stack_id)
+                    INSERT INTO recruitment_stacks (recruitment_id, stack_id)
                     VALUES (:recruitment_id, :stack_id)
                 """), {"recruitment_id": recruitment_id, "stack_id": stack_id})
+
         session.commit()
         print(f"✅ 기술 스택 매핑 완료: {matched_stack_ids}")
     else:
         print("⚠️ 매핑된 기술 스택 없음.")
+
+    min_career, max_career = parse_career_range(experience)
+    stack_ids = matched_stack_ids
+    index_recruitment_to_elasticsearch(
+        recruitment_id, company_name, position_name, position, location, experience,
+        details[0] if len(details) > 0 else None,
+        details[1] if len(details) > 1 else None,
+        details[2] if len(details) > 2 else None,
+        details[3] if len(details) > 3 else None,
+        due_date, image_url,
+        min_career, max_career,
+        stack_ids
+    )
 
 try:
     url = "https://www.wanted.co.kr/wdlist/518?country=kr&job_sort=job.recommend_order&years=-1&locations=all"
