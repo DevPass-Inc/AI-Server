@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from crawler.es_utils import index_recruitment_to_elasticsearch
+from crawler.utils import parse_career_range
 
 # MySQL 설정
 def classify_position(position_name: str) -> str:
@@ -88,7 +89,8 @@ def save_recruitment_with_tech(company_name, location, position, experience, due
         details[1] if len(details) > 1 else None,
         details[2] if len(details) > 2 else None,
         details[3] if len(details) > 3 else None,
-        due_date, image_url
+        due_date, image_url,
+        min_career, max_career
     )
 
     combined_text = " ".join(filter(None, details)).lower()
@@ -157,7 +159,9 @@ try:
                 EC.presence_of_element_located((By.CSS_SELECTOR, "h1.wds-jtr30u"))
             ).text
             position = classify_position(position_name)
-            experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y")[-1].text
+            experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y")[
+                -1].text
+            min_career, max_career = parse_career_range(experience)
             due_date = driver.find_element(By.CSS_SELECTOR, ".JobDueTime_JobDueTime__yvhtg span").text
 
             try:
