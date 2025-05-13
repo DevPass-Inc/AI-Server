@@ -18,3 +18,13 @@ def parse_career_range(career_str: str) -> tuple[int, int]:
         year = int(single_match.group(1))
         return year, year
     return 0, 99
+
+def parse_location(location_str):
+    parts = location_str.strip().split()
+    region = parts[0] if len(parts) > 0 else None
+    district = parts[1] if len(parts) > 1 else None
+
+    return {
+        "region": region,
+        "district": district,
+    }

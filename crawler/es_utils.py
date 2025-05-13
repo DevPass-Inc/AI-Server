@@ -27,12 +27,14 @@ def index_recruitment_to_elasticsearch(
     main_task, qualification, preferred, benefit, deadline, image_url,
     min_career, max_career, stack_ids
 ):
+    location_parsed = parse_location(location)
+
     doc = {
         "id": recruitment_id,
         "companyName": company_name,
         "positionName": position_name,
         "position": position,
-        "location": location,
+        "location": location_parsed,
         "career": career,
         "mainTask": main_task,
         "qualification": qualification,
