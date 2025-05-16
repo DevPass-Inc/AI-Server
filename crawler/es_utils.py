@@ -22,12 +22,19 @@ def index_company_to_elasticsearch(company_id, name, category, location, avg_sal
     }
     es.index(index="companies", id=company_id, document=doc)
 
-def index_recruitment_to_elasticsearch(recruitment_id, company_name, position, location, career, main_task, qualification, preferred, benefit, deadline, image_url):
+def index_recruitment_to_elasticsearch(
+    recruitment_id, company_name, position_name, position, location, career,
+    main_task, qualification, preferred, benefit, deadline, image_url,
+    min_career, max_career, stack_ids
+):
+    location_parsed = parse_location(location)
+
     doc = {
         "id": recruitment_id,
         "companyName": company_name,
+        "positionName": position_name,
         "position": position,
-        "location": location,
+        "location": location_parsed,
         "career": career,
         "mainTask": main_task,
         "qualification": qualification,
@@ -35,5 +42,9 @@ def index_recruitment_to_elasticsearch(recruitment_id, company_name, position, l
         "benefit": benefit,
         "deadline": deadline,
         "imageUrl": image_url,
+        "minCareer": min_career,
+        "maxCareer": max_career,
+        "stacks": stack_ids,
     }
+
     es.index(index="recruitments", id=recruitment_id, document=doc)
