@@ -104,15 +104,26 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
 
     min_career, max_career = parse_career_range(experience)
     stack_ids = matched_stack_ids
+
     index_recruitment_to_elasticsearch(
-        recruitment_id, company_name, position_name, position, location, experience,
-        details[0] if len(details) > 0 else None,
-        details[1] if len(details) > 1 else None,
-        details[2] if len(details) > 2 else None,
-        details[3] if len(details) > 3 else None,
-        due_date, image_url,
-        min_career, max_career,
-        stack_ids
+        recruitment_id,
+        company_id=company_info["company_id"],
+        company_name=company_name,
+        position_name=position_name,
+        position=position,
+        location=location,
+        career=experience,
+        main_task=details[0] if len(details) > 0 else None,
+        qualification=details[1] if len(details) > 1 else None,
+        preferred=details[2] if len(details) > 2 else None,
+        benefit=details[3] if len(details) > 3 else None,
+        deadline=due_date,
+        image_url=image_url,
+        min_career=min_career,
+        max_career=max_career,
+        stack_ids=stack_ids,
+        new_hire_avg_salary=company_info["new_hire_avg_salary"],
+        employee_count=company_info["employee_count"]
     )
 
 try:
