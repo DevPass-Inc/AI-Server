@@ -28,3 +28,8 @@ def parse_location(location_str):
         "region": region,
         "district": district,
     }
+
+def parse_salary_string(salary_str: str) -> int:
+    if not salary_str:
+        return 0
+    return int(salary_str.replace(",", "").replace("만원", "").strip())
