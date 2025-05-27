@@ -77,18 +77,18 @@ for company_id in range(start_id, end_id + 1):
 
         try:
             name_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "wds-14f7cyg"))
+                EC.presence_of_element_located((By.CLASS_NAME, "wds-1f8kxw2"))
             )
             name = name_element.text
         except TimeoutException:
             print(f"⚠️ 회사 ID {company_id} 크롤링 실패: 이름 요소를 찾을 수 없음")
             continue
 
-        category_elements = driver.find_elements(By.CLASS_NAME, "wds-1h75osx")
+        category_elements = driver.find_elements(By.CLASS_NAME, "wds-ilos43")
         category = category_elements[0].text if len(category_elements) > 0 else None
         location = category_elements[1].text if len(category_elements) > 1 else None
 
-        avg_salary_elements = driver.find_elements(By.CLASS_NAME, "wds-yh9s95")
+        avg_salary_elements = driver.find_elements(By.CLASS_NAME, "wds-u1e2rb")
         avg_salary = avg_salary_elements[0].text if len(avg_salary_elements) > 0 else None
         new_hire_avg_salary = avg_salary_elements[1].text if len(avg_salary_elements) > 1 else None
 
@@ -98,7 +98,7 @@ for company_id in range(start_id, end_id + 1):
             for div in employee_divs:
                 label = div.find_element(By.CLASS_NAME, "ChartSummary_wrapper__label__LFmFV").text
                 if "인원" in label:
-                    count_div = div.find_element(By.CLASS_NAME, "wds-yh9s95")
+                    count_div = div.find_element(By.CLASS_NAME, "wds-u1e2rb")
                     employee_count = extract_number(count_div.text)
                     break
         except Exception as e:
