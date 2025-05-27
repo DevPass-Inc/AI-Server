@@ -104,6 +104,12 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
     else:
         print("⚠️ 매핑된 기술 스택 없음.")
 
+    try:
+        company_info = fetch_additional_company_info(company_name)
+    except Exception as e:
+        print(f"❌ 회사 정보 조회 실패: {e}")
+        return
+
     min_career, max_career = parse_career_range(experience)
     stack_ids = matched_stack_ids
 
@@ -170,7 +176,7 @@ try:
             company_name = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Link__NoBQI").text
             location = driver.find_element(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y").text
             position_name = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "h1.wds-jtr30u"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "h1.wds-58fmok"))
             ).text
             position = classify_position(position_name)
             experience = driver.find_elements(By.CSS_SELECTOR, ".JobHeader_JobHeader__Tools__Company__Info__b9P4Y")[
