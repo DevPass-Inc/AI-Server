@@ -10,6 +10,8 @@ from sqlalchemy.orm import sessionmaker
 from crawler.es_utils import index_recruitment_to_elasticsearch
 from crawler.utils import parse_career_range
 
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
+
 # MySQL 설정
 def classify_position(position_name: str) -> str:
     keyword_map = {
