@@ -104,11 +104,7 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
     else:
         print("⚠️ 매핑된 기술 스택 없음.")
 
-    try:
-        company_info = fetch_additional_company_info(company_name)
-    except Exception as e:
-        print(f"❌ 회사 정보 조회 실패: {e}")
-        return
+    company_info = fetch_additional_company_info(company_name)
 
     min_career, max_career = parse_career_range(experience)
     stack_ids = matched_stack_ids
