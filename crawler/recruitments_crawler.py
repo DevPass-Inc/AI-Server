@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from crawler.db_utils import fetch_additional_company_info
 from crawler.es_utils import index_recruitment_to_elasticsearch
 from crawler.utils import parse_career_range
 
