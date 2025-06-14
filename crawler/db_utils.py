@@ -2,7 +2,7 @@ from sqlalchemy import text, create_engine
 from sqlalchemy.orm import sessionmaker
 import re
 
-DATABASE_URL = "mysql+pymysql://user:password@localhost:3306/devpass"
+DATABASE_URL = "mysql+pymysql://user:password@devpass-db:3306/devpass"
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
