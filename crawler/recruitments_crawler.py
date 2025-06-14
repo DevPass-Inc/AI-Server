@@ -106,6 +106,16 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
         print("⚠️ 매핑된 기술 스택 없음.")
 
     company_info = fetch_additional_company_info(company_name)
+    if not company_info:
+        print(f"⚠️ 회사 정보 없음이지만 Elasticsearch에 기본값으로 인덱싱 진행")
+        company_info = {
+            "company_id": None,
+            "category": "미상",
+            "location": location,
+            "avg_salary": None,
+            "new_hire_avg_salary": None,
+            "employee_count": None,
+        }
 
     min_career, max_career = parse_career_range(experience)
     stack_ids = matched_stack_ids

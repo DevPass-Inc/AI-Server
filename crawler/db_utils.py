@@ -27,7 +27,8 @@ def fetch_additional_company_info(company_name: str):
     """), {"company_name": company_name}).mappings().first()
 
     if not result:
-        raise Exception(f"회사 정보 없음: {company_name}")
+        print(f"회사 정보 없음: {company_name}")
+        return None
 
     return {
         "company_id": result["id"],
