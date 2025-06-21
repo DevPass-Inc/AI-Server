@@ -28,7 +28,7 @@ def index_recruitment_to_elasticsearch(
     recruitment_id, company_id, company_name,
     position_name, position, location, career,
     main_task, qualification, preferred, benefit,
-    deadline, image_url, min_career, max_career, stack_ids,
+    deadline, image_url, min_career, max_career, stacks,
     new_hire_avg_salary=None, employee_count=None
 ):
     location_parsed = parse_location(location)
@@ -50,7 +50,7 @@ def index_recruitment_to_elasticsearch(
         "imageUrl": image_url,
         "minCareer": min_career,
         "maxCareer": max_career,
-        "stacks": stack_ids,
+        "stacks": stacks,
         "newHireAvgSalary": new_hire_avg_salary_int,
         "employeeCount": employee_count
     }

@@ -54,11 +54,16 @@ driver = webdriver.Chrome(
     options=options
 )
 
+def fetch_stack_id_to_name():
+    query = text("SELECT stack_id, name FROM stacks")
+    result = session.execute(query).mappings().all()
+    return {row["stack_id"]: row["name"] for row in result}
+
 
 def fetch_stacks():
     query = text("SELECT stack_id, name FROM stacks")
     result = session.execute(query).mappings().all()
-    return {row['name'].lower(): row['stack_id'] for row in result}
+    return {str(row["name"]).lower(): row["stack_id"] for row in result}
 
 def save_recruitment_with_tech(company_name, location, position_name, position, experience, due_date, image_url, details, tech_stacks):
     insert_recruitment_query = text("""
@@ -84,7 +89,11 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
     recruitment_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
 
     combined_text = " ".join(filter(None, details)).lower()
-    matched_stack_ids = [tech_id for tech_name, tech_id in tech_stacks.items() if tech_name in combined_text]
+
+    matched_stack_ids = [
+        tech_id for tech_name, tech_id in tech_stacks.items()
+        if tech_name in combined_text
+    ]
 
     if matched_stack_ids:
         for stack_id in matched_stack_ids:
@@ -118,7 +127,12 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
         }
 
     min_career, max_career = parse_career_range(experience)
-    stack_ids = matched_stack_ids
+
+    stack_id_to_name = fetch_stack_id_to_name()
+    stacks = [
+        {"id": stack_id, "name": stack_id_to_name.get(stack_id, "UNKNOWN")}
+        for stack_id in matched_stack_ids
+    ]
 
     index_recruitment_to_elasticsearch(
         recruitment_id,
