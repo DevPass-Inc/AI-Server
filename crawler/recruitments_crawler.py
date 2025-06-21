@@ -150,7 +150,7 @@ def save_recruitment_with_tech(company_name, location, position_name, position, 
         image_url=image_url,
         min_career=min_career,
         max_career=max_career,
-        stack_ids=stack_ids,
+        stacks=stacks,
         new_hire_avg_salary=company_info["new_hire_avg_salary"],
         employee_count=company_info["employee_count"]
     )
@@ -161,24 +161,24 @@ try:
 
     # 무한 스크롤 처리
     SCROLL_PAUSE_TIME = 2
-    last_height = driver.execute_script("return document.body.scrollHeight")
+    MAX_JOBS = 10
 
-    while True:
+    job_links = set()
+
+    while len(job_links) < MAX_JOBS:
+        new_links = driver.find_elements(By.CSS_SELECTOR,
+                                         ".JobCard_JobCard__aVx71 a[data-attribute-id='position__click']")
+        for link in new_links:
+            job_links.add(link.get_attribute("href"))
+            if len(job_links) >= MAX_JOBS:
+                break
+
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(SCROLL_PAUSE_TIME)
 
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
-
-    print("스크롤 완료, 모든 데이터를 로드했습니다.")
-
     tech_stacks = fetch_stacks()
-    job_links = [card.get_attribute("href") for card in driver.find_elements(By.CSS_SELECTOR,
-                                                                             ".JobCard_JobCard__Tb7pI a[data-attribute-id='position__click']")]
-
     print(f"총 {len(job_links)}개의 채용공고 링크 수집 완료.")
+
 
     for link in job_links:
         try:
