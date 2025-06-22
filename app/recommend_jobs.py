@@ -73,15 +73,15 @@ def recommend_jobs(user_stacks, user_resume):
         except Exception as e:
             session.rollback()
             raise e
-        # 그 다음은 너 코드 그대로
+
         tech_similarity = calculate_tech_similarity(user_stacks, job_tech_stacks)
         context_similarity = calculate_context_similarity(user_resume, job['description'])
         final_score = calculate_final_score(tech_similarity, context_similarity)
 
         tech_stack_status = [
             {
-                "stack": job_stack,
-                "isRequired": any(job_stack.lower() == user_stack.lower() for user_stack in user_stacks)
+                "name": job_stack,
+                "isRequired": str(any(job_stack.lower() == user_stack.lower() for user_stack in user_stacks)).lower()
             }
             for job_stack in job_tech_stacks
         ]

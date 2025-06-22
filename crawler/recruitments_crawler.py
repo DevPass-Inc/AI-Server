@@ -179,7 +179,6 @@ try:
     tech_stacks = fetch_stacks()
     print(f"총 {len(job_links)}개의 채용공고 링크 수집 완료.")
 
-
     for link in job_links:
         try:
             driver.get(link)
